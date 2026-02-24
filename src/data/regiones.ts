@@ -44,8 +44,17 @@ export const REGIONES: RegionElectoral[] = [
  * Mapa: nombre UPPERCASE del JNE (strDepartamento) → id slug de región.
  * Ej: "LIMA" → "lima", "LA LIBERTAD" → "la-libertad", "ANCASH" → "ancash"
  *
- * Nota: "LIMA" mapea a "lima" (metropolitana). "LIMA PROVINCIAS" mapea a "lima-provincias".
+ * Incluye tanto los display names (de REGIONES) como alias que usa
+ * el JNE en strDepartamento (p.ej. "LIMA" sin "METROPOLITANA").
  */
-export const REGION_POR_NOMBRE_JNE = new Map<string, string>(
-  REGIONES.map(r => [r.nombre.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), r.id])
-);
+export const REGION_POR_NOMBRE_JNE: Map<string, string> = (() => {
+  const m = new Map<string, string>(
+    REGIONES.map(r => [
+      r.nombre.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
+      r.id,
+    ])
+  );
+  // Alias JNE: el campo strDepartamento dice "LIMA", no "LIMA METROPOLITANA"
+  m.set("LIMA", "lima");
+  return m;
+})();
