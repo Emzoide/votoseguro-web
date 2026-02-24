@@ -47,9 +47,12 @@ export default async function CandidatosPage({
     (TABS.find((t) => t.id === cargoParam)?.id) ?? "FORMULA_PRESIDENCIAL";
   const tabActivo = TABS.find((t) => t.id === cargoActivo)!;
 
-  // Departamento
+  // Departamento — normalizar contra getDepartamentos() para que el botón activo coincida
   const departamentos = getDepartamentos();
-  const depActivo = depParam?.toUpperCase().trim() || (tabActivo.esRegional ? departamentos[0] : undefined);
+  const depInput = depParam?.trim();
+  const depActivo = depInput
+    ? (departamentos.find((d) => d.toUpperCase() === depInput.toUpperCase()) ?? depInput)
+    : (tabActivo.esRegional ? departamentos[0] : undefined);
 
   // Candidatos del cargo activo
   const listas = getCandidatosPorCargo(cargoActivo as TipoCargo, depActivo);

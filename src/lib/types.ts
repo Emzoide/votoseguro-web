@@ -16,6 +16,25 @@ export type TipoCargo =
 
 export type EstadoCandidato = "INSCRITO" | "ADMITIDO" | "EXCLUIDO" | "IMPUGNADO";
 
+// --- Partidos políticos (registro ONPE) ---
+
+export interface PartidoPolitico {
+  id: number;              // Número de lista ONPE (1-38)
+  nombre: string;          // Nombre completo
+  siglas: string;          // Abreviatura (2-5 chars)
+  color: string;           // Hex color para UI
+  idOrg: number;           // ID organización JNE
+  retirado?: boolean;      // Partido retirado del proceso
+  skipPresidente?: boolean; // No presenta candidato presidencial
+}
+
+// --- Regiones electorales ---
+
+export interface RegionElectoral {
+  id: string;              // slug kebab-case: "lima", "la-libertad"
+  nombre: string;          // Display: "Lima Metropolitana", "La Libertad"
+}
+
 // --- Organizaciones políticas ---
 
 export interface OrganizacionPolitica {

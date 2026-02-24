@@ -1,22 +1,10 @@
 /**
- * Servicio de candidatos — lee datos estáticos generados desde Supabase.
+ * Servicio de candidatos — lee datos estáticos particionados por cargo y región.
  *
- * Datos generados con: node scripts/generate-static-data.mjs
- * Fuente: Supabase (8,217 candidatos) — proceso 124 (EG 2026)
+ * Fuente: JSONs importados del proyecto simulador-votacion-2026,
+ * originalmente obtenidos de la API JNE (proceso 124 — EG 2026).
  *
- * IDs de cargo:
- *   1  → PRESIDENTE DE LA REPÚBLICA
- *   2  → PRIMER VICEPRESIDENTE
- *   3  → SEGUNDO VICEPRESIDENTE
- *   5  → REPRESENTANTE ANTE EL PARLAMENTO ANDINO
- *   15 → DIPUTADO
- *   16 → SENADOR
- *
- * Distinción senador nacional vs regional:
- *   strUbigeo === "000000" → nacional
- *   strUbigeo !== "000000" → regional (filtrar por strDepartamento)
- *
- * Foto: https://mpesije.jne.gob.pe/apidocs/{strGuidFoto}.jpeg
+ * Foto: https://mpesije.jne.gob.pe/apidocs/{strGuidFoto}.{ext}
  */
 
 import type {
@@ -27,16 +15,23 @@ import type {
   TipoCargo,
 } from "@/lib/types";
 
-// Datos estáticos generados desde Supabase (build time)
-import candidatosData from "@/data/candidatos-eg2026.json";
+import { PARTIDOS_POR_IDORG } from "@/data/partidos";
+import { REGIONES, REGION_POR_NOMBRE_JNE } from "@/data/regiones";
+
+// ── Datos nacionales (importados estáticamente) ────────────────────────────────
+import presidencialesWrapper from "@/data/presidenciales/candidatos.json";
+import senadoresNacWrapper from "@/data/senadores-nacional/candidatos.json";
+import parlamenAndinoWrapper from "@/data/parlamento-andino/candidatos.json";
+
+// ── Datos regionales (barrel imports) ──────────────────────────────────────────
+import { SENADORES_REGIONAL } from "@/data/senadores-regional";
+import { DIPUTADOS } from "@/data/diputados";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Configuración
 // ──────────────────────────────────────────────────────────────────────────────
 
 const JNE_FOTO_BASE = "https://mpesije.jne.gob.pe/apidocs";
-
-const ID_PROCESO = 124;
 
 const ID_CARGO = {
   PRESIDENTE: 1,
@@ -48,67 +43,22 @@ const ID_CARGO = {
 } as const;
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Orden oficial ONPE — Sorteo 12-feb-2026
-// (mismo que antes, sin cambios)
-// ──────────────────────────────────────────────────────────────────────────────
-const ORDEN_ONPE: Record<number, number> = {
-  3025: 1,   // Alianza Electoral Venceremos
-  2869: 2,   // Partido Patriótico del Perú
-  2941: 3,   // Partido Cívico Obras
-  2901: 4,   // FREPAP
-  2895: 5,   // Partido Demócrata Verde
-  2961: 6,   // Partido del Buen Gobierno
-  2932: 7,   // Partido Político Perú Acción
-  2921: 8,   // Partido Político PRIN
-  2967: 9,   // Partido Político Progresemos
-  2935: 10,  // Partido Sí Creo
-  2956: 11,  // Partido País para Todos
-  2857: 12,  // Frente de la Esperanza 2021
-  2218: 13,  // Partido Político Nacional Perú Libre
-  // 2968: 14 — excluido JNE
-  2931: 15,  // Primero la Gente
-  1264: 16,  // Partido Juntos Por el Perú
-  2731: 17,  // Partido Político Podemos Perú
-  2986: 18,  // Partido Democrático Federal
-  2898: 19,  // Partido Fe en el Perú
-  2985: 20,  // Partido Político Integridad Democrática
-  1366: 21,  // Fuerza Popular
-  1257: 22,  // Alianza para el Progreso
-  2995: 23,  // Partido Político Cooperación Popular
-  2980: 24,  // Ahora Nación
-  2933: 25,  // Libertad Popular
-  2998: 26,  // Un Camino Diferente
-  2173: 27,  // Avanza País
-  2924: 28,  // Perú Moderno
-  2925: 29,  // Partido Político Perú Primero
-  2927: 30,  // Salvemos al Perú
-  14:   31,  // Partido Democrático Somos Perú
-  2930: 32,  // Partido Aprista Peruano
-  22:   33,  // Renovación Popular
-  2867: 34,  // Partido Demócrata Unido Perú
-  3024: 35,  // Fuerza y Libertad
-  2939: 36,  // Partido de los Trabajadores y Emprendedores
-  3023: 37,  // Unidad Nacional
-  2840: 38,  // Partido Morado
-};
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Tipo interno — estructura de la respuesta JNE
+// Tipo interno — estructura cruda JNE
 // ──────────────────────────────────────────────────────────────────────────────
 
 interface JNECandidatoRaw {
-  idProcesoElectoral: number;
+  idProcesoElectoral?: number;
   idOrganizacionPolitica: number;
   strOrganizacionPolitica?: string | null;
   intPosicion?: number | null;
-  idCargo: number;
+  idCargo?: number;
   strCargo?: string | null;
   strNombres?: string | null;
   strApellidoPaterno?: string | null;
   strApellidoMaterno?: string | null;
   strEstadoCandidato?: string | null;
   strGuidFoto?: string | null;
-  strNombre?: string | null;    // nombre del archivo foto (para determinar ext)
+  strNombre?: string | null;
   strUbigeo?: string | null;
   strDepartamento?: string | null;
   strDocumentoIdentidad?: string | null;
@@ -118,43 +68,23 @@ interface JNECandidatoRaw {
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────────
 
-/** Normaliza una cadena: mayúsculas + sin diacríticos (ej. "ÁNCASH" → "ANCASH"). */
-function normalizarDep(s: string): string {
-  return s
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function buildFotoUrl(guidFoto: string | null | undefined, nombreArchivo: string | null | undefined): string | undefined {
+function buildFotoUrl(
+  guidFoto: string | null | undefined,
+  nombreArchivo: string | null | undefined
+): string | undefined {
   if (!guidFoto || guidFoto.trim() === "") return undefined;
-  // Usar la extensión real del archivo (algunos son .jpg, otros .jpeg)
   const ext = nombreArchivo?.toLowerCase().endsWith(".jpeg") ? "jpeg" : "jpg";
   return `${JNE_FOTO_BASE}/${guidFoto.trim()}.${ext}`;
 }
 
-const PALABRAS_EXCLUIDAS = new Set(["DE", "DEL", "LA", "EL", "LOS", "LAS", "Y", "E", "A", "EN", "POR", "PARA"]);
-
-function generarSigla(nombre: string): string {
-  const palabras = nombre
-    .trim()
-    .toUpperCase()
-    .split(/\s+/)
-    .filter((p) => p.length > 1 && !PALABRAS_EXCLUIDAS.has(p));
-  return palabras.slice(0, 4).map((p) => p[0]).join("");
-}
-
-function mapOrganizacion(
-  idOrg: number,
-  nombre: string,
-  numeroLista: number
-): OrganizacionPolitica {
+function mapOrganizacion(idOrg: number): OrganizacionPolitica {
+  const partido = PARTIDOS_POR_IDORG.get(idOrg);
   return {
     id: idOrg,
-    nombre: nombre || "Sin nombre",
-    sigla: generarSigla(nombre || ""),
-    colorPrimario: "#6B7280",
-    numeroLista,
+    nombre: partido?.nombre ?? "Sin nombre",
+    sigla: partido?.siglas ?? "—",
+    colorPrimario: partido?.color ?? "#6B7280",
+    numeroLista: partido?.id ?? 999,
   };
 }
 
@@ -188,8 +118,7 @@ function mapCandidato(raw: JNECandidatoRaw, cargo: TipoCargo): Candidato {
  */
 function agruparEnListas(
   rows: JNECandidatoRaw[],
-  cargo: TipoCargo,
-  mapaNumeros: Map<number, number>
+  cargo: TipoCargo
 ): ListaElectoral[] {
   const mapa = new Map<number, JNECandidatoRaw[]>();
   for (const row of rows) {
@@ -199,25 +128,49 @@ function agruparEnListas(
   }
 
   const listas: ListaElectoral[] = [];
-
   for (const [idOrg, candidatosOrg] of mapa) {
-    // Ordenar por intPosicion ASC
     candidatosOrg.sort(
       (a, b) => (a.intPosicion ?? 999) - (b.intPosicion ?? 999)
     );
-
-    const primeraFila = candidatosOrg[0];
-    const numLista = mapaNumeros.get(idOrg) ?? 999;
-    const nombre = primeraFila.strOrganizacionPolitica ?? "Sin nombre";
-    const organizacion = mapOrganizacion(idOrg, nombre, numLista);
+    const organizacion = mapOrganizacion(idOrg);
     const candidatos = candidatosOrg.map((r) => mapCandidato(r, cargo));
-
     listas.push({ id: idOrg, organizacion, cargo, candidatos });
   }
 
-  // Ordenar por posición ONPE
   listas.sort((a, b) => a.organizacion.numeroLista - b.organizacion.numeroLista);
   return listas;
+}
+
+/**
+ * Filtra solo candidatos activos (no excluidos).
+ */
+function filtrarActivos(rows: JNECandidatoRaw[]): JNECandidatoRaw[] {
+  return rows.filter(
+    (r) => r.strEstadoCandidato?.toUpperCase() !== "EXCLUIDO"
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Resolver región: nombre JNE uppercase → slug
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Convierte un departamento (formato variable) a slug de región.
+ * Acepta: "LIMA", "lima", "Lima Metropolitana", "la-libertad", etc.
+ */
+function resolverRegion(dep: string): string | null {
+  const input = dep.trim();
+
+  // Si ya es un slug válido
+  if (REGIONES.some((r) => r.id === input)) return input;
+
+  // Normalizar: uppercase sin diacríticos
+  const norm = input
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  return REGION_POR_NOMBRE_JNE.get(norm) ?? null;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -226,56 +179,19 @@ function agruparEnListas(
 
 /**
  * Obtiene todos los datos necesarios para el simulador de cédula.
- * Lee del JSON estático generado desde Supabase (sin llamadas externas en runtime).
+ * Lee de JSONs particionados por cargo y región (sin llamadas externas).
  *
- * @param departamento - Nombre del departamento en MAYÚSCULAS (ej: "LIMA").
+ * @param departamento - Nombre o slug del departamento (ej: "LIMA", "lima", "la-libertad").
  *   Si es undefined, las columnas regionales devuelven array vacío.
  */
-export function getDatosSimulador(
-  departamento?: string
-): DatosSimulador {
-  const rawList = candidatosData as JNECandidatoRaw[];
+export function getDatosSimulador(departamento?: string): DatosSimulador {
+  const regionId = departamento ? resolverRegion(departamento) : null;
 
-  // Filtrar solo proceso 124 y no excluidos
-  const activos = rawList.filter(
-    (r) =>
-      r.idProcesoElectoral === ID_PROCESO &&
-      r.strEstadoCandidato?.toUpperCase() !== "EXCLUIDO"
+  // ── Fórmulas presidenciales ────────────────────────────────────────────────
+  const presidentes = filtrarActivos(
+    (presidencialesWrapper as { data: JNECandidatoRaw[] }).data
   );
 
-  // Separar por cargo
-  const presidentes = activos.filter((r) =>
-    [ID_CARGO.PRESIDENTE, ID_CARGO.VP1, ID_CARGO.VP2].includes(r.idCargo as 1 | 2 | 3)
-  );
-  const senadoresNac = activos.filter(
-    (r) => r.idCargo === ID_CARGO.SENADOR && r.strUbigeo === "000000"
-  );
-  const depNorm = departamento ? normalizarDep(departamento) : null;
-  const senadoresReg = depNorm
-    ? activos.filter(
-        (r) =>
-          r.idCargo === ID_CARGO.SENADOR &&
-          r.strUbigeo !== "000000" &&
-          normalizarDep(r.strDepartamento ?? "") === depNorm
-      )
-    : [];
-  const diputados = depNorm
-    ? activos.filter(
-        (r) =>
-          r.idCargo === ID_CARGO.DIPUTADO &&
-          normalizarDep(r.strDepartamento ?? "") === depNorm
-      )
-    : [];
-  const parlamento = activos.filter((r) => r.idCargo === ID_CARGO.PARLAMENTO_ANDINO);
-
-  // Construir mapa de números de lista (orden ONPE)
-  const idsOrgs = [...new Set(activos.map((r) => r.idOrganizacionPolitica))];
-  const mapaNumeros = new Map<number, number>();
-  for (const id of idsOrgs) {
-    mapaNumeros.set(id, ORDEN_ONPE[id] ?? 999);
-  }
-
-  // Construir fórmulas presidenciales
   const mapaFormulas = new Map<number, JNECandidatoRaw[]>();
   for (const row of presidentes) {
     const idOrg = row.idOrganizacionPolitica;
@@ -286,9 +202,7 @@ export function getDatosSimulador(
   const formulasPresidenciales: ListaElectoral[] = [];
   for (const [idOrg, filas] of mapaFormulas) {
     filas.sort((a, b) => (a.intPosicion ?? 999) - (b.intPosicion ?? 999));
-    const numLista = mapaNumeros.get(idOrg) ?? 999;
-    const nombre = filas[0].strOrganizacionPolitica ?? "Sin nombre";
-    const organizacion = mapOrganizacion(idOrg, nombre, numLista);
+    const organizacion = mapOrganizacion(idOrg);
     const candidatos = filas.map((r) => mapCandidato(r, "FORMULA_PRESIDENCIAL"));
     formulasPresidenciales.push({
       id: idOrg,
@@ -304,12 +218,36 @@ export function getDatosSimulador(
     (a, b) => a.organizacion.numeroLista - b.organizacion.numeroLista
   );
 
+  // ── Senadores nacionales ───────────────────────────────────────────────────
+  const senadoresNacRaw = filtrarActivos(
+    (senadoresNacWrapper as { data: JNECandidatoRaw[] }).data
+  );
+  const senadoresNacionales = agruparEnListas(senadoresNacRaw, "SENADOR_NACIONAL");
+
+  // ── Senadores regionales ───────────────────────────────────────────────────
+  const senadoresRegRaw = regionId
+    ? filtrarActivos((SENADORES_REGIONAL[regionId] ?? []) as JNECandidatoRaw[])
+    : [];
+  const senadoresRegionales = agruparEnListas(senadoresRegRaw, "SENADOR_REGIONAL");
+
+  // ── Diputados ──────────────────────────────────────────────────────────────
+  const diputadosRaw = regionId
+    ? filtrarActivos((DIPUTADOS[regionId] ?? []) as JNECandidatoRaw[])
+    : [];
+  const diputados = agruparEnListas(diputadosRaw, "DIPUTADO");
+
+  // ── Parlamento Andino ──────────────────────────────────────────────────────
+  const parlamenRaw = filtrarActivos(
+    (parlamenAndinoWrapper as { data: JNECandidatoRaw[] }).data
+  );
+  const parlamentoAndino = agruparEnListas(parlamenRaw, "PARLAMENTO_ANDINO");
+
   return {
     formulasPresidenciales,
-    senadoresNacionales: agruparEnListas(senadoresNac, "SENADOR_NACIONAL", mapaNumeros),
-    senadoresRegionales: agruparEnListas(senadoresReg, "SENADOR_REGIONAL", mapaNumeros),
-    diputados: agruparEnListas(diputados, "DIPUTADO", mapaNumeros),
-    parlamentoAndino: agruparEnListas(parlamento, "PARLAMENTO_ANDINO", mapaNumeros),
+    senadoresNacionales,
+    senadoresRegionales,
+    diputados,
+    parlamentoAndino,
   };
 }
 
@@ -319,15 +257,13 @@ export function getDatosSimulador(
 
 /**
  * Devuelve la URL de la hoja de vida en el portal JNE (EG 2026).
- * @param dni - DNI del candidato (strDocumentoIdentidad)
  */
 export function getHojaVidaUrl(dni: string): string {
   return `https://votoinformado.jne.gob.pe/hoja-vida/22/${dni}`;
 }
 
 /**
- * Devuelve las listas electorales para una cargo determinado.
- * Para cargos regionales (SENADOR_REGIONAL, DIPUTADO) se filtra por departamento.
+ * Devuelve las listas electorales para un cargo determinado.
  */
 export function getCandidatosPorCargo(
   cargo: TipoCargo,
@@ -350,14 +286,11 @@ export function getCandidatosPorCargo(
   }
 }
 
-/** Devuelve todos los departamentos disponibles en el JSON (únicos, ordenados). */
+/**
+ * Devuelve todos los departamentos disponibles (display names).
+ */
 export function getDepartamentos(): string[] {
-  const rawList = candidatosData as JNECandidatoRaw[];
-  const deps = new Set<string>();
-  for (const r of rawList) {
-    if (r.strDepartamento && r.strUbigeo !== "000000") {
-      deps.add(r.strDepartamento.trim().toUpperCase());
-    }
-  }
-  return Array.from(deps).sort((a, b) => a.localeCompare(b, "es"));
+  return REGIONES
+    .filter((r) => r.id !== "peruanos-extranjero")
+    .map((r) => r.nombre);
 }
