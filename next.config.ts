@@ -16,7 +16,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://apiplataformaelectoral8.jne.gob.pe https://mpesije.jne.gob.pe https://ixmvqstgbobhqbwxjgjh.supabase.co",
+      "img-src 'self' data: blob: https://apiplataformaelectoral8.jne.gob.pe https://mpesije.jne.gob.pe https://sroppublico.jne.gob.pe https://ixmvqstgbobhqbwxjgjh.supabase.co",
       "font-src 'self'",
       "connect-src 'self' https://apiplataformaelectoral8.jne.gob.pe https://mpesije.jne.gob.pe",
       "frame-ancestors 'none'",
@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "mpesije.jne.gob.pe",
+      },
+      {
+        protocol: "https",
+        hostname: "sroppublico.jne.gob.pe",
       },
       {
         protocol: "https",
