@@ -33,7 +33,7 @@ export function FilaPartido({
 
   useEffect(() => {
     setInputVals(Array.from({ length: maxPreferenciales }, (_, i) => (prefs[i] ? String(prefs[i]) : "")));
-  }, [isSelected, seleccion?.preferencias?.join(","), maxPreferenciales, prefs]);
+  }, [isSelected, seleccion?.preferencias?.join(","), maxPreferenciales]);
 
   const handleInputChange = (slot: number, raw: string) => {
     const cleaned = raw.replace(/\D/g, "").slice(0, 4);
