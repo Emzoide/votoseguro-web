@@ -146,7 +146,10 @@ function agruparEnListas(
  */
 function filtrarActivos(rows: JNECandidatoRaw[]): JNECandidatoRaw[] {
   return rows.filter(
-    (r) => r.strEstadoCandidato?.toUpperCase() !== "EXCLUIDO"
+    (r) => {
+      const estado = r.strEstadoCandidato?.toUpperCase() ?? "";
+      return estado !== "EXCLUIDO" && estado !== "IMPROCEDENTE";
+    }
   );
 }
 
@@ -241,6 +244,19 @@ export function getDatosSimulador(departamento?: string): DatosSimulador {
     (parlamenAndinoWrapper as { data: JNECandidatoRaw[] }).data
   );
   const parlamentoAndino = agruparEnListas(parlamenRaw, "PARLAMENTO_ANDINO");
+
+  // Asegura presencia de PDF en Parlamento Andino para mantener consistencia
+  // visual de la cédula entre columnas cuando la fuente no trae filas para ese cargo.
+  const IDORG_PDF = 2986;
+  if (!parlamentoAndino.some((l) => l.organizacion.id === IDORG_PDF)) {
+    parlamentoAndino.push({
+      id: IDORG_PDF,
+      organizacion: mapOrganizacion(IDORG_PDF),
+      cargo: "PARLAMENTO_ANDINO",
+      candidatos: [],
+    });
+    parlamentoAndino.sort((a, b) => a.organizacion.numeroLista - b.organizacion.numeroLista);
+  }
 
   return {
     formulasPresidenciales,

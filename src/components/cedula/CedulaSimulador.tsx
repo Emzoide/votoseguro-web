@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ColumnaElectoral } from "./ColumnaElectoral";
 import { ResultadoVoto } from "./ResultadoVoto";
-import { ResumenVotoLateral } from "./ResumenVotoLateral";
 import { TutorialOnboarding } from "./TutorialOnboarding";
 import { useCedula } from "@/hooks/useCedula";
 import { CONFIG_COLUMNAS } from "@/lib/cedula-logic";
@@ -17,27 +16,18 @@ const TODAS_COLUMNAS: Array<{
   esFormula: boolean;
 }> = [
   { key: "formulaPresidencial", configIdx: 0, esFormula: true },
-  { key: "senadorNacional",     configIdx: 1, esFormula: false },
-  { key: "senadorRegional",     configIdx: 2, esFormula: false },
-  { key: "diputado",            configIdx: 3, esFormula: false },
-  { key: "parlamentoAndino",    configIdx: 4, esFormula: false },
+  { key: "senadorNacional", configIdx: 1, esFormula: false },
+  { key: "senadorRegional", configIdx: 2, esFormula: false },
+  { key: "diputado", configIdx: 3, esFormula: false },
+  { key: "parlamentoAndino", configIdx: 4, esFormula: false },
 ];
 
-const TAB_LABELS: Record<string, { short: string; full: string; emoji: string }> = {
-  formulaPresidencial: { short: "Presidencial",  full: "Fórmula Presidencial", emoji: "🏛️" },
-  senadorNacional:     { short: "Sen. Nacional", full: "Senadores Nacionales", emoji: "🗳️" },
-  senadorRegional:     { short: "Sen. Regional", full: "Senadores Regionales", emoji: "📍" },
-  diputado:            { short: "Diputados",     full: "Diputados",            emoji: "🏛️" },
-  parlamentoAndino:    { short: "P. Andino",     full: "Parlamento Andino",    emoji: "🌎" },
-};
-
-// Header colours per column
-const HEADER_COLORS: Record<number, string> = {
-  0: "bg-red-800",
-  1: "bg-blue-900",
-  2: "bg-green-900",
-  3: "bg-purple-900",
-  4: "bg-yellow-700",
+const TAB_LABELS: Record<string, { short: string; full: string }> = {
+  formulaPresidencial: { short: "Presidencial", full: "Formula Presidencial" },
+  senadorNacional: { short: "Sen. Nacional", full: "Senadores Nacionales" },
+  senadorRegional: { short: "Sen. Regional", full: "Senadores Regionales" },
+  diputado: { short: "Diputados", full: "Diputados" },
+  parlamentoAndino: { short: "P. Andino", full: "Parlamento Andino" },
 };
 
 interface Props {
@@ -48,9 +38,9 @@ export function CedulaSimulador({ datos }: Props) {
   const DATOS = datos;
 
   const COLUMNA_DATOS: Record<ColumnaKey, typeof DATOS.senadoresNacionales> = {
-    senadorNacional:  DATOS.senadoresNacionales,
-    senadorRegional:  DATOS.senadoresRegionales,
-    diputado:         DATOS.diputados,
+    senadorNacional: DATOS.senadoresNacionales,
+    senadorRegional: DATOS.senadoresRegionales,
+    diputado: DATOS.diputados,
     parlamentoAndino: DATOS.parlamentoAndino,
   };
 
@@ -115,6 +105,7 @@ export function CedulaSimulador({ datos }: Props) {
         />
       );
     }
+
     const ck = col.key as ColumnaKey;
     return (
       <ColumnaElectoral
@@ -123,9 +114,7 @@ export function CedulaSimulador({ datos }: Props) {
         listas={COLUMNA_DATOS[ck]}
         seleccion={voto[ck]}
         onSeleccionarLista={(idLista) => seleccionarLista(ck, idLista)}
-        onSetPreferencial={(slot, num) =>
-          setPreferencial(ck, slot, num, config.maxPreferenciales)
-        }
+        onSetPreferencial={(slot, num) => setPreferencial(ck, slot, num, config.maxPreferenciales)}
         esFormula={false}
         className={className}
       />
@@ -133,50 +122,31 @@ export function CedulaSimulador({ datos }: Props) {
   };
 
   const esUltima = columnaActiva === TODAS_COLUMNAS.length - 1;
-  const headerColor = HEADER_COLORS[columnaActiva] ?? "bg-red-800";
   const colActualLabel = TAB_LABELS[TODAS_COLUMNAS[columnaActiva].key];
 
   return (
-    <div className="max-w-full lg:grid lg:grid-cols-[1fr_260px] lg:items-start lg:gap-5">
-
-    {/* ── Columna izquierda: cédula + resultado ── */}
-    <div className="min-w-0">
-      {/* Tutorial */}
+    <div className="max-w-full">
       <TutorialOnboarding />
 
-      {/* ── CÉDULA ── */}
-      <div className="rounded-lg overflow-hidden border-2 border-gray-400 shadow-xl">
-
-        {/* Franja bandera */}
-        <div className="flex h-2" aria-hidden="true">
-          <div className="flex-1 bg-red-700" />
-          <div className="flex-1 bg-white border-y border-gray-300" />
-          <div className="flex-1 bg-red-700" />
-        </div>
-
-        {/* Header unificado ONPE — reducido */}
-        <div className="bg-red-700 text-white text-center py-2 px-4">
-          <p className="text-[9px] sm:text-[10px] text-red-200 tracking-wide">
-            REPÚBLICA DEL PERÚ — ONPE
+      <section className="overflow-hidden border border-[#bfc6cf] bg-white">
+        <header className="bg-red-700 text-white text-center px-4 py-3">
+          <h2 className="text-lg sm:text-2xl font-black uppercase tracking-wide">Cedula de sufragio</h2>
+          <p className="text-xs sm:text-sm text-slate-100 mt-1">
+            Marque con una cruz o un aspa. El voto preferencial es opcional.
           </p>
-          <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest leading-tight">
-            CÉDULA DE SUFRAGIO
-          </h2>
-          <p className="text-[9px] sm:text-[10px] text-red-200 tracking-wide mt-0.5">
-            ELECCIONES GENERALES — 12 DE ABRIL DE 2026
+        </header>
+
+        <div className="bg-[#f8f6e8] border-y border-[#e7dfb0] px-3 py-1.5">
+          <p className="text-[11px] text-[#c2410c] text-center">
+            Los espacios vacios corresponden a partidos sin candidatos.
           </p>
         </div>
 
-        {/* Barra de progreso + steps — WCAG: touch target mínimo 44px */}
-        <div className="bg-white border-b border-gray-300 px-3 pt-2 pb-1">
-          {/* Texto progreso */}
+        <div className="bg-white border-b border-gray-300 px-3 py-2">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] text-gray-600 font-semibold">Progreso</span>
-            <span className="text-[11px] font-bold text-gray-800">
-              {columnasMarcadas} / 5 columnas
-            </span>
+            <span className="text-[11px] text-gray-600 font-semibold">Progreso de marcado</span>
+            <span className="text-[11px] font-bold text-gray-800">{columnasMarcadas} / 5 columnas</span>
           </div>
-          {/* Barra */}
           <div
             className="w-full bg-gray-200 rounded-full h-2"
             role="progressbar"
@@ -189,190 +159,121 @@ export function CedulaSimulador({ datos }: Props) {
               className="h-2 rounded-full transition-all duration-500"
               style={{
                 width: `${progreso}%`,
-                backgroundColor: progreso === 100 ? "#16a34a" : "#dc2626",
+                backgroundColor: progreso === 100 ? "#16a34a" : "#1e293b",
               }}
             />
           </div>
+        </div>
 
-          {/* Step buttons — mínimo 44px de altura (WCAG 2.5.5) */}
-          <div className="flex gap-1 mt-1.5" role="tablist" aria-label="Columnas de la cédula">
+        <div className="lg:hidden flex flex-col">
+          <div className="flex gap-1 bg-gray-100 border-b border-gray-300 px-2 py-1.5" role="tablist" aria-label="Columnas de la cedula">
             {TODAS_COLUMNAS.map((col, idx) => {
-              const marcado = tieneSeleccion(col.key);
               const activo = columnaActiva === idx;
-              const label = TAB_LABELS[col.key];
+              const marcado = tieneSeleccion(col.key);
               return (
                 <button
                   key={col.key}
                   type="button"
                   role="tab"
                   aria-selected={activo}
-                  aria-label={`${label.full}${marcado ? " — marcado" : ""}`}
                   onClick={() => setColumnaActiva(idx)}
-                  className={`
-                    flex-1 flex flex-col items-center justify-center gap-0.5
-                    min-h-[44px] rounded transition-all
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500
-                    ${activo
-                      ? "bg-gray-100 ring-1 ring-gray-400"
-                      : "hover:bg-gray-50"
-                    }
-                  `}
+                  className={`flex-1 min-h-[40px] rounded border text-[9px] font-bold px-1 ${
+                    activo ? "bg-white border-gray-400 text-gray-900" : "bg-gray-50 border-gray-200 text-gray-500"
+                  }`}
                 >
-                  <div className={`w-full h-1.5 rounded-full transition-colors ${
-                    marcado ? "bg-green-500" : activo ? "bg-gray-500" : "bg-gray-300"
-                  }`} />
-                  <span className="text-[8px] font-semibold leading-none mt-0.5 text-gray-600 hidden sm:block">
-                    {label.short}
-                  </span>
-                  {marcado && (
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full sm:hidden" aria-hidden="true" />
-                  )}
+                  {TAB_LABELS[col.key].short}
+                  {marcado ? " *" : ""}
                 </button>
               );
             })}
           </div>
-        </div>
 
-        {/* ── VISTA MÓVIL: una columna a la vez ── */}
-        <div className="lg:hidden flex flex-col">
-
-          {/* Active column */}
           <div className="min-h-[72vh] bg-white flex flex-col" role="tabpanel">
             {renderColumna(TODAS_COLUMNAS[columnaActiva], "flex-1")}
           </div>
 
-          {/* Navigation bar — WCAG: min-h 52px, nombre columna visible */}
-          <div className={`flex border-t-2 border-white/20 ${headerColor}`}>
-            {/* ATRÁS */}
+          <div className="flex border-t border-gray-300">
             <button
               type="button"
               onClick={() => setColumnaActiva((c) => Math.max(0, c - 1))}
               disabled={columnaActiva === 0}
               aria-label="Columna anterior"
-              className="
-                w-24 shrink-0 py-3.5 text-sm font-bold text-white/80 hover:text-white
-                hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed
-                transition-colors border-r border-white/20 min-h-[52px]
-              "
+              className="w-24 shrink-0 py-3 text-sm font-bold text-slate-700 bg-gray-100 disabled:opacity-30"
             >
-              ← Atrás
+              Atras
             </button>
-
-            {/* Nombre de la columna activa */}
-            <div className="flex-1 flex flex-col items-center justify-center px-2 select-none">
-              <span className="text-[10px] text-white/50 font-medium leading-none">
-                {columnaActiva + 1} de {TODAS_COLUMNAS.length}
-              </span>
-              <span className="text-[12px] sm:text-sm text-white font-black leading-tight text-center mt-0.5">
-                {colActualLabel.full}
-              </span>
+            <div className="flex-1 flex items-center justify-center text-xs font-bold text-slate-700">
+              {columnaActiva + 1} de {TODAS_COLUMNAS.length} - {colActualLabel.full}
             </div>
-
-            {/* SIGUIENTE / VERIFICAR */}
             {esUltima ? (
               <button
                 type="button"
                 onClick={handleValidar}
                 aria-label="Verificar mi voto"
-                className="
-                  w-24 shrink-0 py-3.5 text-sm font-bold text-white bg-green-600
-                  hover:bg-green-700 transition-colors min-h-[52px]
-                "
+                className="w-24 shrink-0 py-3 text-sm font-bold text-white bg-green-700"
               >
-                ✓ Verificar
+                Verificar
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setColumnaActiva((c) => Math.min(TODAS_COLUMNAS.length - 1, c + 1))}
                 aria-label={`Ir a ${TAB_LABELS[TODAS_COLUMNAS[columnaActiva + 1]?.key ?? "senadorNacional"].full}`}
-                className="
-                  w-24 shrink-0 py-3.5 text-sm font-bold text-white hover:bg-white/10
-                  transition-colors min-h-[52px]
-                "
+                className="w-24 shrink-0 py-3 text-sm font-bold text-white bg-slate-700"
               >
-                Siguiente →
+                Siguiente
               </button>
             )}
           </div>
         </div>
 
-        {/* ── DESKTOP (lg+): 5 columnas side-by-side ── */}
-        <div className="hidden lg:grid lg:grid-cols-5 border-t border-gray-400 divide-x divide-gray-300">
-          {TODAS_COLUMNAS.map((col) => renderColumna(col))}
+        <div className="hidden lg:block bg-gray-50">
+          <div className="max-h-[76vh] overflow-y-auto border-t border-gray-300">
+            <div className="grid grid-cols-5 divide-x divide-gray-300 min-w-[1200px]">
+              {TODAS_COLUMNAS.map((col) => renderColumna(col))}
+            </div>
+          </div>
         </div>
+      </section>
 
-      </div>
-
-      {/* Nota legal */}
       <p className="text-[10px] text-gray-500 text-center mt-2 px-2">
-        Simulador educativo. Datos referenciales del JNE. La cédula oficial es emitida por la ONPE.
+        Simulador educativo. Datos referenciales del JNE. La cedula oficial es emitida por la ONPE.
       </p>
 
-      {/* ── Botones acción MÓVIL ── */}
-      {hayAlgunaSeleccion && (
-        <div className="lg:hidden flex gap-2 mt-3 px-1">
+      <div className="mt-3 px-1">
+        {hayAlgunaSeleccion ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleValidar}
+              className="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-3.5 rounded-lg text-sm transition-colors min-h-[48px]"
+            >
+              Verificar mi voto
+            </button>
+            <button
+              type="button"
+              onClick={handleReintentar}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3.5 px-4 rounded-lg text-sm transition-colors min-h-[48px]"
+            >
+              Borrar
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
             onClick={handleValidar}
-            className="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold
-                       py-3.5 rounded-lg text-sm transition-colors shadow-md min-h-[48px]
-                       flex items-center justify-center gap-2
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+            className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3.5 rounded-lg text-sm transition-colors min-h-[48px]"
           >
-            <span aria-hidden="true">✓</span> Verificar mi voto
+            Verificar mi voto
           </button>
-          <button
-            type="button"
-            onClick={handleReintentar}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold
-                       py-3.5 px-4 rounded-lg text-sm transition-colors min-h-[48px]
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500"
-          >
-            Borrar
-          </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ── Botón verificar MÓVIL (cuando no hay selección aún) ── */}
-      {!hayAlgunaSeleccion && (
-        <div className="lg:hidden mt-3 px-1">
-          <button
-            type="button"
-            onClick={handleValidar}
-            className="w-full bg-red-700 hover:bg-red-800 text-white font-bold
-                       py-3.5 rounded-lg text-sm transition-colors shadow-md min-h-[48px]
-                       flex items-center justify-center gap-2
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-          >
-            <span aria-hidden="true">✓</span> Verificar mi voto
-          </button>
-        </div>
-      )}
-
-      {/* Resultado */}
       {mostrarResultado && resultado && (
         <div id="resultado-voto" className="mt-6">
-          <ResultadoVoto
-            resultado={resultado}
-            voto={voto}
-            datos={DATOS}
-            onReintentar={handleReintentar}
-          />
+          <ResultadoVoto resultado={resultado} voto={voto} datos={DATOS} onReintentar={handleReintentar} />
         </div>
       )}
-    </div>{/* fin columna izquierda */}
-
-    {/* ── Panel lateral DESKTOP ── */}
-    <div className="hidden lg:block pt-0">
-      <ResumenVotoLateral
-        voto={voto}
-        datos={DATOS}
-        onValidar={handleValidar}
-        onBorrar={handleReintentar}
-      />
-    </div>
-
     </div>
   );
 }
