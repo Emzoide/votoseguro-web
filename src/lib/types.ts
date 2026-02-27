@@ -47,6 +47,45 @@ export interface OrganizacionPolitica {
   numeroLista: number; // número asignado en la cédula
 }
 
+// --- Datos enriched (hoja de vida JNE) ---
+
+export interface SentenciaPenalDetalle {
+  idHvSentenciaPenal: number;
+  txDelitoPenal: string;
+  txFalloPenal: string;
+  feSentenciaPenal: string;       // "DD/MM/YYYY"
+  txModalidad?: string;           // "SUSPENDIDA" | "EFECTIVA" | ...
+  txCumpleFallo?: string;         // "PENA CUMPLIDA" | ...
+  txComentario?: string | null;
+}
+
+export interface SentenciaObligaDetalle {
+  idHvSentenciaObliga: number;
+  txMateriaSentencia: string;     // "FAMILIA / ALIMENTARIA" | "LABORAL" | ...
+  txFalloObliga: string;
+}
+
+export interface CandidatoFlags {
+  congresistaActual: boolean;
+  exCongresista: boolean;
+  exAlcalde: boolean;
+  exGobernador: boolean;
+  exMinistro: boolean;
+  cargosAnteriores: string[];
+  sentenciaPenal: boolean;
+  sentenciaPenalDetalle: SentenciaPenalDetalle[];
+  sentenciaObliga: boolean;
+  sentenciaObligaDetalle: SentenciaObligaDetalle[];
+}
+
+export interface EnrichedCandidatoRaw {
+  dni: string;
+  nombre: string;
+  foto: string;
+  estado: string;
+  flags: CandidatoFlags;
+}
+
 // --- Candidatos ---
 
 export interface Candidato {
@@ -63,7 +102,9 @@ export interface Candidato {
   // Datos adicionales para perfil
   departamento?: string;
   partido?: string;
-  dni?: string; // strDocumentoIdentidad del JNE
+  dni?: string;  // strDocumentoIdentidad del JNE
+  sexo?: string; // "MASCULINO" | "FEMENINO" — para concordancia de género en alertas
+  flags?: CandidatoFlags;
 }
 
 // --- Listas electorales ---

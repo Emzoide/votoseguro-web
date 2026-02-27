@@ -4,8 +4,13 @@ import { useState } from "react";
 import { ColumnaElectoral } from "./ColumnaElectoral";
 import { ResultadoVoto } from "./ResultadoVoto";
 import { TutorialOnboarding } from "./TutorialOnboarding";
+import {
+  CeldaPresidencialDesktop,
+  CeldaPreferencialDesktop,
+} from "./CeldaDesktop";
 import { useCedula } from "@/hooks/useCedula";
 import { CONFIG_COLUMNAS } from "@/lib/cedula-logic";
+import { PARTIDOS } from "@/data/partidos";
 import type { DatosSimulador, VotoCedula } from "@/lib/types";
 
 type ColumnaKey = keyof Omit<VotoCedula, "formulaPresidencial">;
@@ -32,9 +37,10 @@ const TAB_LABELS: Record<string, { short: string; full: string }> = {
 
 interface Props {
   datos: DatosSimulador;
+  regionNombre?: string;
 }
 
-export function CedulaSimulador({ datos }: Props) {
+export function CedulaSimulador({ datos, regionNombre = "" }: Props) {
   const DATOS = datos;
 
   const COLUMNA_DATOS: Record<ColumnaKey, typeof DATOS.senadoresNacionales> = {
@@ -227,10 +233,134 @@ export function CedulaSimulador({ datos }: Props) {
           </div>
         </div>
 
+        {/* ── Layout desktop: una fila por partido ──────────────────────── */}
         <div className="hidden lg:block bg-gray-50">
-          <div className="max-h-[76vh] overflow-y-auto border-t border-gray-300">
-            <div className="grid grid-cols-5 divide-x divide-gray-300 min-w-[1200px]">
-              {TODAS_COLUMNAS.map((col) => renderColumna(col))}
+          <div className="max-h-[76vh] overflow-x-auto overflow-y-auto border-t border-gray-300">
+            {/* ── Header 2 filas sticky ── */}
+            <div className="sticky top-0 z-10 w-fit min-w-full">
+              {/* Fila 1: etiquetas agrupadas */}
+              <div className="flex divide-x divide-gray-300">
+                <div className="min-w-[196px] bg-[#b31b1b] text-white py-1.5 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
+                    PRESIDENTE Y<br />VICEPRESIDENTES
+                  </h3>
+                </div>
+                <div className="min-w-[492px] bg-[#1f3f94] text-white py-1.5 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide">
+                    SENADORES
+                  </h3>
+                </div>
+                <div className="min-w-[246px] bg-[#5b1f94] text-white py-1.5 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide">
+                    DIPUTADOS
+                  </h3>
+                </div>
+                <div className="min-w-[246px] bg-[#b27607] text-white py-1.5 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide">
+                    PARL. ANDINO
+                  </h3>
+                </div>
+              </div>
+              {/* Fila 2: sub-etiquetas */}
+              <div className="flex divide-x divide-gray-300 text-white text-[10px] font-black uppercase">
+                <div className="min-w-[196px] bg-[#b31b1b]/80 py-1 px-2 text-center">
+                  FÓRMULA
+                </div>
+                <div className="min-w-[246px] bg-[#1f3f94]/80 py-1 px-2 text-center">
+                  NACIONAL
+                </div>
+                <div className="min-w-[246px] bg-[#14653a] py-1 px-2 text-center">
+                  {regionNombre ? regionNombre.toUpperCase() : "REGIONAL"}
+                </div>
+                <div className="min-w-[246px] bg-[#5b1f94]/80 py-1 px-2 text-center">
+                  {regionNombre ? regionNombre.toUpperCase() : "REGIONAL"}
+                </div>
+                <div className="min-w-[246px] bg-[#b27607]/80 py-1 px-2 text-center">
+                  ANDINO
+                </div>
+              </div>
+            </div>
+
+            {/* ── Body: una fila por partido ── */}
+            <div className="flex flex-col w-fit min-w-full">
+              {PARTIDOS.map((p) => {
+                const formulaLista = DATOS.formulasPresidenciales.find(
+                  (l) => l.organizacion.id === p.idOrg
+                );
+                const senadNacLista = DATOS.senadoresNacionales.find(
+                  (l) => l.organizacion.id === p.idOrg
+                );
+                const senadRegLista = DATOS.senadoresRegionales.find(
+                  (l) => l.organizacion.id === p.idOrg
+                );
+                const dipLista = DATOS.diputados.find(
+                  (l) => l.organizacion.id === p.idOrg
+                );
+                const parlLista = DATOS.parlamentoAndino.find(
+                  (l) => l.organizacion.id === p.idOrg
+                );
+                return (
+                  <div
+                    key={p.id}
+                    className="flex border-b border-[#c8d0d8] divide-x divide-[#c8d0d8]"
+                  >
+                    <CeldaPresidencialDesktop
+                      partido={p}
+                      lista={formulaLista}
+                      seleccion={voto.formulaPresidencial}
+                      onSeleccionar={seleccionarFormula}
+                    />
+                    <CeldaPreferencialDesktop
+                      partido={p}
+                      lista={senadNacLista}
+                      maxPref={2}
+                      seleccion={voto.senadorNacional}
+                      onSeleccionar={(id) =>
+                        seleccionarLista("senadorNacional", id)
+                      }
+                      onSetPreferencial={(slot, num) =>
+                        setPreferencial("senadorNacional", slot, num, 2)
+                      }
+                    />
+                    <CeldaPreferencialDesktop
+                      partido={p}
+                      lista={senadRegLista}
+                      maxPref={1}
+                      seleccion={voto.senadorRegional}
+                      onSeleccionar={(id) =>
+                        seleccionarLista("senadorRegional", id)
+                      }
+                      onSetPreferencial={(slot, num) =>
+                        setPreferencial("senadorRegional", slot, num, 1)
+                      }
+                    />
+                    <CeldaPreferencialDesktop
+                      partido={p}
+                      lista={dipLista}
+                      maxPref={2}
+                      seleccion={voto.diputado}
+                      onSeleccionar={(id) =>
+                        seleccionarLista("diputado", id)
+                      }
+                      onSetPreferencial={(slot, num) =>
+                        setPreferencial("diputado", slot, num, 2)
+                      }
+                    />
+                    <CeldaPreferencialDesktop
+                      partido={p}
+                      lista={parlLista}
+                      maxPref={2}
+                      seleccion={voto.parlamentoAndino}
+                      onSeleccionar={(id) =>
+                        seleccionarLista("parlamentoAndino", id)
+                      }
+                      onSetPreferencial={(slot, num) =>
+                        setPreferencial("parlamentoAndino", slot, num, 2)
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { BadgeAntecedente } from "./BadgeAntecedente";
+import { JudicialAlert } from "./JudicialAlert";
 import { getHojaVidaUrl } from "@/lib/candidatos-service";
 import type { Candidato } from "@/lib/types";
 import congresistasData from "@/data/congresistas-2021-2025.json";
@@ -22,7 +23,7 @@ export function FilaCandidato({ candidato, posicion, esPresidencial = false }: F
   const hojaVidaUrl = candidato.dni ? getHojaVidaUrl(candidato.dni) : undefined;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <div className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
       {/* Posición */}
       <div className="w-6 shrink-0 text-center">
         <span className="text-[10px] font-black text-gray-400">#{posicion}</span>
@@ -63,6 +64,10 @@ export function FilaCandidato({ candidato, posicion, esPresidencial = false }: F
             <BadgeAntecedente tipo="IMPUGNADO" />
           )}
         </div>
+        {/* Alertas judiciales y legislativas del enriched data */}
+        {candidato.flags && (
+          <JudicialAlert flags={candidato.flags} sexo={candidato.sexo} />
+        )}
       </div>
 
       {/* Ver hoja de vida */}

@@ -13,6 +13,7 @@ import type {
   Candidato,
   OrganizacionPolitica,
   TipoCargo,
+  EnrichedCandidatoRaw,
 } from "@/lib/types";
 
 import { PARTIDOS_POR_IDORG } from "@/data/partidos";
@@ -26,6 +27,15 @@ import parlamenAndinoWrapper from "@/data/parlamento-andino/candidatos.json";
 // ── Datos regionales (barrel imports) ──────────────────────────────────────────
 import { SENADORES_REGIONAL } from "@/data/senadores-regional";
 import { DIPUTADOS } from "@/data/diputados";
+
+// ── Datos enriched nacionales ──────────────────────────────────────────────────
+import presidencialesEnrichedWrapper from "@/data/presidenciales-enriched/candidatos.json";
+import senadoresNacEnrichedWrapper from "@/data/senadores-nacional-enriched/candidatos.json";
+import parlamenAndinoEnrichedWrapper from "@/data/parlamento-andino-enriched/candidatos.json";
+
+// ── Datos enriched regionales (barrel imports) ─────────────────────────────────
+import { DIPUTADOS_ENRICHED } from "@/data/diputados-enriched";
+import { SENADORES_REGIONAL_ENRICHED } from "@/data/senadores-regional-enriched";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Configuración
@@ -59,6 +69,7 @@ interface JNECandidatoRaw {
   strEstadoCandidato?: string | null;
   strGuidFoto?: string | null;
   strNombre?: string | null;
+  strSexo?: string | null;
   strUbigeo?: string | null;
   strDepartamento?: string | null;
   strDocumentoIdentidad?: string | null;
@@ -88,7 +99,17 @@ function mapOrganizacion(idOrg: number): OrganizacionPolitica {
   };
 }
 
-function mapCandidato(raw: JNECandidatoRaw, cargo: TipoCargo): Candidato {
+function buildEnrichedMap(
+  enrichedJson: { data: EnrichedCandidatoRaw[] }
+): Map<string, EnrichedCandidatoRaw> {
+  return new Map((enrichedJson.data ?? []).map((e) => [e.dni, e]));
+}
+
+function mapCandidato(
+  raw: JNECandidatoRaw,
+  cargo: TipoCargo,
+  enrichedEntry?: EnrichedCandidatoRaw
+): Candidato {
   const nombres = raw.strNombres ?? "";
   const ap = raw.strApellidoPaterno ?? "";
   const am = raw.strApellidoMaterno ?? "";
@@ -110,15 +131,19 @@ function mapCandidato(raw: JNECandidatoRaw, cargo: TipoCargo): Candidato {
     estado: (raw.strEstadoCandidato ?? "INSCRITO") as Candidato["estado"],
     departamento: raw.strDepartamento ?? undefined,
     dni,
+    sexo: raw.strSexo ?? undefined,
+    flags: enrichedEntry?.flags ?? undefined,
   };
 }
 
 /**
  * Agrupa filas crudas de la API JNE por organización política → ListaElectoral[].
+ * Opcional: recibe un mapa enriched (por DNI) para inyectar flags judiciales.
  */
 function agruparEnListas(
   rows: JNECandidatoRaw[],
-  cargo: TipoCargo
+  cargo: TipoCargo,
+  enrichedMap?: Map<string, EnrichedCandidatoRaw>
 ): ListaElectoral[] {
   const mapa = new Map<number, JNECandidatoRaw[]>();
   for (const row of rows) {
@@ -133,7 +158,9 @@ function agruparEnListas(
       (a, b) => (a.intPosicion ?? 999) - (b.intPosicion ?? 999)
     );
     const organizacion = mapOrganizacion(idOrg);
-    const candidatos = candidatosOrg.map((r) => mapCandidato(r, cargo));
+    const candidatos = candidatosOrg.map((r) =>
+      mapCandidato(r, cargo, enrichedMap?.get(r.strDocumentoIdentidad?.trim() ?? ""))
+    );
     listas.push({ id: idOrg, organizacion, cargo, candidatos });
   }
 
@@ -190,6 +217,18 @@ function resolverRegion(dep: string): string | null {
 export function getDatosSimulador(departamento?: string): DatosSimulador {
   const regionId = departamento ? resolverRegion(departamento) : null;
 
+  // ── Mapas enriched (por DNI) ───────────────────────────────────────────────
+  type EnrichedWrapper = { data: EnrichedCandidatoRaw[] };
+  const presEnrichedMap = buildEnrichedMap(presidencialesEnrichedWrapper as EnrichedWrapper);
+  const nacEnrichedMap  = buildEnrichedMap(senadoresNacEnrichedWrapper as EnrichedWrapper);
+  const parlEnrichedMap = buildEnrichedMap(parlamenAndinoEnrichedWrapper as EnrichedWrapper);
+  const regEnrichedMap  = regionId
+    ? new Map((SENADORES_REGIONAL_ENRICHED[regionId] ?? []).map((e) => [e.dni, e]))
+    : new Map<string, EnrichedCandidatoRaw>();
+  const dipEnrichedMap  = regionId
+    ? new Map((DIPUTADOS_ENRICHED[regionId] ?? []).map((e) => [e.dni, e]))
+    : new Map<string, EnrichedCandidatoRaw>();
+
   // ── Fórmulas presidenciales ────────────────────────────────────────────────
   const presidentes = filtrarActivos(
     (presidencialesWrapper as { data: JNECandidatoRaw[] }).data
@@ -206,7 +245,9 @@ export function getDatosSimulador(departamento?: string): DatosSimulador {
   for (const [idOrg, filas] of mapaFormulas) {
     filas.sort((a, b) => (a.intPosicion ?? 999) - (b.intPosicion ?? 999));
     const organizacion = mapOrganizacion(idOrg);
-    const candidatos = filas.map((r) => mapCandidato(r, "FORMULA_PRESIDENCIAL"));
+    const candidatos = filas.map((r) =>
+      mapCandidato(r, "FORMULA_PRESIDENCIAL", presEnrichedMap.get(r.strDocumentoIdentidad?.trim() ?? ""))
+    );
     formulasPresidenciales.push({
       id: idOrg,
       organizacion,
@@ -225,25 +266,25 @@ export function getDatosSimulador(departamento?: string): DatosSimulador {
   const senadoresNacRaw = filtrarActivos(
     (senadoresNacWrapper as { data: JNECandidatoRaw[] }).data
   );
-  const senadoresNacionales = agruparEnListas(senadoresNacRaw, "SENADOR_NACIONAL");
+  const senadoresNacionales = agruparEnListas(senadoresNacRaw, "SENADOR_NACIONAL", nacEnrichedMap);
 
   // ── Senadores regionales ───────────────────────────────────────────────────
   const senadoresRegRaw = regionId
     ? filtrarActivos((SENADORES_REGIONAL[regionId] ?? []) as JNECandidatoRaw[])
     : [];
-  const senadoresRegionales = agruparEnListas(senadoresRegRaw, "SENADOR_REGIONAL");
+  const senadoresRegionales = agruparEnListas(senadoresRegRaw, "SENADOR_REGIONAL", regEnrichedMap);
 
   // ── Diputados ──────────────────────────────────────────────────────────────
   const diputadosRaw = regionId
     ? filtrarActivos((DIPUTADOS[regionId] ?? []) as JNECandidatoRaw[])
     : [];
-  const diputados = agruparEnListas(diputadosRaw, "DIPUTADO");
+  const diputados = agruparEnListas(diputadosRaw, "DIPUTADO", dipEnrichedMap);
 
   // ── Parlamento Andino ──────────────────────────────────────────────────────
   const parlamenRaw = filtrarActivos(
     (parlamenAndinoWrapper as { data: JNECandidatoRaw[] }).data
   );
-  const parlamentoAndino = agruparEnListas(parlamenRaw, "PARLAMENTO_ANDINO");
+  const parlamentoAndino = agruparEnListas(parlamenRaw, "PARLAMENTO_ANDINO", parlEnrichedMap);
 
   // Asegura presencia de PDF en Parlamento Andino para mantener consistencia
   // visual de la cédula entre columnas cuando la fuente no trae filas para ese cargo.

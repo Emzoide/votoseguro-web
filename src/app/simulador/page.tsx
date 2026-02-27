@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CedulaSimulador } from "@/components/cedula/CedulaSimulador";
 import { SelectorDepartamento } from "@/components/cedula/SelectorDepartamento";
 import { getDatosSimulador } from "@/lib/candidatos-service";
+import { REGIONES, REGION_POR_NOMBRE_JNE } from "@/data/regiones";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://votoseguro-web.vercel.app";
 
@@ -30,6 +31,21 @@ export default async function SimuladorPage({
   // Datos estáticos en memoria — sin llamada de red
   const datos = getDatosSimulador(dep);
 
+  // Resolver slug y nombre de región para el header desktop
+  const depSlug = dep
+    ? REGIONES.some((r) => r.id === dep)
+      ? dep
+      : (REGION_POR_NOMBRE_JNE.get(
+          dep
+            .toUpperCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+        ) ?? null)
+    : null;
+  const regionNombre = depSlug
+    ? (REGIONES.find((r) => r.id === depSlug)?.nombre ?? "")
+    : "";
+
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       {/* Header de página */}
@@ -47,7 +63,7 @@ export default async function SimuladorPage({
       <SelectorDepartamento departamentoActual={dep} />
 
       {/* Simulador principal */}
-      <CedulaSimulador datos={datos} />
+      <CedulaSimulador datos={datos} regionNombre={regionNombre} />
 
       {/* Info sobre valla electoral */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-3xl mx-auto">

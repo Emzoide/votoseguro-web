@@ -33,6 +33,7 @@ export function FilaPartido({
 
   useEffect(() => {
     setInputVals(Array.from({ length: maxPreferenciales }, (_, i) => (prefs[i] ? String(prefs[i]) : "")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelected, seleccion?.preferencias?.join(","), maxPreferenciales]);
 
   const handleInputChange = (slot: number, raw: string) => {

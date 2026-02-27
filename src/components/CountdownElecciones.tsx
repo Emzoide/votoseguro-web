@@ -36,6 +36,7 @@ export function CountdownElecciones({ compact = false }: { compact?: boolean }) 
   const [montado, setMontado] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTiempo(calcularTiempoRestante());
     setMontado(true);
 

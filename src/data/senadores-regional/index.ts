@@ -33,7 +33,6 @@ import tumbes from "./tumbes.json";
 import ucayali from "./ucayali.json";
 import peruanosExtranjero from "./peruanos-extranjero.json";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JNEDataWrapper = { data: any[] };
 
 function extract(mod: JNEDataWrapper) {

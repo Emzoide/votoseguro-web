@@ -38,7 +38,7 @@ const VOTO_INICIAL: VotoCedula = {};
 export function useCedula(): UseCedulaReturn {
   const [voto, setVoto] = useState<VotoCedula>(VOTO_INICIAL);
   const [resultado, setResultado] = useState<ResultadoCedula | null>(null);
-  const [tiempoInicio] = useState<number>(Date.now());
+  const [tiempoInicio] = useState<number>(() => Date.now());
   const [cambiosRealizados, setCambiosRealizados] = useState<number>(0);
 
   const registrarCambio = useCallback(() => {
