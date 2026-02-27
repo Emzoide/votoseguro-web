@@ -44,4 +44,7 @@ next-env.d.ts
 *.swp
 *.swo
 
+# MCP config (contains API keys)
+.mcp.json
+
 .vercel

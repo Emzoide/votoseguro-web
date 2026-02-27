@@ -1,16 +1,14 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-400 mt-auto">
+    <footer className="bg-slate-950 text-gray-400 mt-auto">
       {/* Franja decorativa superior */}
-      <div className="flex h-1">
-        <div className="flex-1 bg-red-700" />
-        <div className="flex-1 bg-white/20" />
-        <div className="flex-1 bg-red-700" />
-      </div>
+      <div className="h-1 bg-gradient-to-r from-voto-rojo via-voto-amarillo to-voto-rojo" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -31,12 +29,11 @@ export function Footer() {
               Plataforma educativa gratuita para prepararte para las
               Elecciones Generales del Perú. Sin fines de lucro.
             </p>
-            <Link
-              href="/simulador"
-              className="inline-flex items-center gap-1.5 bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-yellow-300 transition-colors"
-            >
-              🗳️ Ir al simulador
-            </Link>
+            <Button asChild size="sm" className="bg-voto-amarillo hover:bg-yellow-300 text-gray-900 text-xs font-bold">
+              <Link href="/simulador" className="gap-1.5">
+                🗳️ Ir al simulador
+              </Link>
+            </Button>
           </div>
 
           {/* Columna 2: Aviso legal */}
@@ -92,18 +89,15 @@ export function Footer() {
                 <span>5 cargos en una sola cédula: Presidente, Senadores, Diputados y Parlamento Andino</span>
               </li>
             </ul>
-            <div className="flex gap-3 mt-3">
-              <a href="https://www.onpe.gob.pe" target="_blank" rel="noopener noreferrer"
-                className="text-[10px] bg-white/10 hover:bg-white/20 text-yellow-300 px-2 py-1 rounded transition-colors">
-                ONPE
+            <div className="flex gap-2 mt-3">
+              <a href="https://www.onpe.gob.pe" target="_blank" rel="noopener noreferrer">
+                <Badge variant="outline" className="text-yellow-300 border-yellow-300/30 hover:bg-white/10 transition-colors cursor-pointer">ONPE</Badge>
               </a>
-              <a href="https://portal.jne.gob.pe" target="_blank" rel="noopener noreferrer"
-                className="text-[10px] bg-white/10 hover:bg-white/20 text-yellow-300 px-2 py-1 rounded transition-colors">
-                JNE
+              <a href="https://portal.jne.gob.pe" target="_blank" rel="noopener noreferrer">
+                <Badge variant="outline" className="text-yellow-300 border-yellow-300/30 hover:bg-white/10 transition-colors cursor-pointer">JNE</Badge>
               </a>
-              <a href="https://www.reniec.gob.pe" target="_blank" rel="noopener noreferrer"
-                className="text-[10px] bg-white/10 hover:bg-white/20 text-yellow-300 px-2 py-1 rounded transition-colors">
-                RENIEC
+              <a href="https://www.reniec.gob.pe" target="_blank" rel="noopener noreferrer">
+                <Badge variant="outline" className="text-yellow-300 border-yellow-300/30 hover:bg-white/10 transition-colors cursor-pointer">RENIEC</Badge>
               </a>
             </div>
           </div>

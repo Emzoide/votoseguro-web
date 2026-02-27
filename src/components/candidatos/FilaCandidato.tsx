@@ -20,7 +20,7 @@ interface FilaCandidatoProps {
 
 export function FilaCandidato({ candidato, posicion, esPresidencial = false }: FilaCandidatoProps) {
   const meta = candidato.dni ? congresistas[candidato.dni] : undefined;
-  const hojaVidaUrl = candidato.dni ? getHojaVidaUrl(candidato.dni) : undefined;
+  const hojaVidaUrl = candidato.dni ? getHojaVidaUrl(candidato.dni, candidato.idOrganizacion) : undefined;
 
   return (
     <div className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">

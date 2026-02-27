@@ -314,9 +314,11 @@ export function getDatosSimulador(departamento?: string): DatosSimulador {
 
 /**
  * Devuelve la URL de la hoja de vida en el portal JNE (EG 2026).
+ * El segundo segmento de la URL es el idOrganizacionPolitica del candidato,
+ * NO un process ID global — cada partido tiene su propio ID.
  */
-export function getHojaVidaUrl(dni: string): string {
-  return `https://votoinformado.jne.gob.pe/hoja-vida/22/${dni}`;
+export function getHojaVidaUrl(dni: string, idOrg: number): string {
+  return `https://votoinformado.jne.gob.pe/hoja-vida/${idOrg}/${dni}`;
 }
 
 /**
