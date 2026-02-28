@@ -66,19 +66,29 @@ export function TutorialOnboarding() {
     <>
       {/* Overlay semitransparente */}
       <div
-        className="fixed inset-0 bg-black/40 z-40"
+        className="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-300"
         onClick={handleCerrar}
         aria-hidden="true"
       />
 
       {/* Tooltip / modal centrado */}
       <div
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-32px)] max-w-sm"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-32px)] max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-300"
         role="dialog"
         aria-modal="true"
         aria-label="Tutorial del simulador"
       >
-        <div className="bg-gray-900 text-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-gray-900 text-white rounded-2xl shadow-2xl overflow-hidden relative">
+          {/* Botón cerrar (X) */}
+          <button
+            type="button"
+            onClick={handleCerrar}
+            className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-gray-700 hover:bg-gray-600 transition-colors text-gray-200 font-bold z-10"
+            aria-label="Cerrar tutorial"
+          >
+            ×
+          </button>
+
           {/* Flecha decorativa (apunta hacia la cédula) */}
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-3 overflow-hidden pointer-events-none">
             <div className="w-4 h-4 bg-gray-900 rotate-45 mx-auto -mt-2" />

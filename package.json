@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "type-check": "NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

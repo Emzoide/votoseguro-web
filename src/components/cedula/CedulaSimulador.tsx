@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ColumnaElectoral } from "./ColumnaElectoral";
 import { ResultadoVoto } from "./ResultadoVoto";
 import { TutorialOnboarding } from "./TutorialOnboarding";
@@ -20,12 +20,12 @@ const TODAS_COLUMNAS: Array<{
   configIdx: number;
   esFormula: boolean;
 }> = [
-  { key: "formulaPresidencial", configIdx: 0, esFormula: true },
-  { key: "senadorNacional", configIdx: 1, esFormula: false },
-  { key: "senadorRegional", configIdx: 2, esFormula: false },
-  { key: "diputado", configIdx: 3, esFormula: false },
-  { key: "parlamentoAndino", configIdx: 4, esFormula: false },
-];
+    { key: "formulaPresidencial", configIdx: 0, esFormula: true },
+    { key: "senadorNacional", configIdx: 1, esFormula: false },
+    { key: "senadorRegional", configIdx: 2, esFormula: false },
+    { key: "diputado", configIdx: 3, esFormula: false },
+    { key: "parlamentoAndino", configIdx: 4, esFormula: false },
+  ];
 
 const TAB_LABELS: Record<string, { short: string; full: string }> = {
   formulaPresidencial: { short: "Presidencial", full: "Formula Presidencial" },
@@ -172,62 +172,93 @@ export function CedulaSimulador({ datos, regionNombre = "" }: Props) {
         </div>
 
         <div className="lg:hidden flex flex-col">
-          <div className="flex gap-1 bg-gray-100 border-b border-gray-300 px-2 py-1.5" role="tablist" aria-label="Columnas de la cedula">
-            {TODAS_COLUMNAS.map((col, idx) => {
-              const activo = columnaActiva === idx;
-              const marcado = tieneSeleccion(col.key);
-              return (
-                <button
-                  key={col.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={activo}
-                  onClick={() => setColumnaActiva(idx)}
-                  className={`flex-1 min-h-[40px] rounded border text-[9px] font-bold px-1 ${
-                    activo ? "bg-white border-gray-400 text-gray-900" : "bg-gray-50 border-gray-200 text-gray-500"
-                  }`}
-                >
-                  {TAB_LABELS[col.key].short}
-                  {marcado ? " *" : ""}
-                </button>
-              );
-            })}
+          {/* Tab buttons - improved for mobile */}
+          <div className="bg-gray-100 border-b border-gray-300 px-1 py-2 overflow-x-auto" role="tablist" aria-label="Columnas de la cedula">
+            <div className="flex gap-0.5 min-w-fit">
+              {TODAS_COLUMNAS.map((col, idx) => {
+                const activo = columnaActiva === idx;
+                const marcado = tieneSeleccion(col.key);
+                return (
+                  <button
+                    key={col.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activo}
+                    onClick={() => setColumnaActiva(idx)}
+                    className={`shrink-0 min-h-[44px] px-2 py-2 rounded border text-[10px] sm:text-[11px] font-bold transition-all duration-200 whitespace-nowrap ${
+                      activo
+                        ? "bg-white border-red-700 text-red-700 shadow-sm"
+                        : "bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {TAB_LABELS[col.key].short}
+                    {marcado ? " ✓" : ""}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="min-h-[72vh] bg-white flex flex-col" role="tabpanel">
+          {/* Progress indicator */}
+          <div className="bg-white border-b border-gray-200 px-3 py-2">
+            <div className="flex items-center justify-between mb-1 gap-2">
+              <span className="text-[10px] text-gray-600 font-semibold">Columna {columnaActiva + 1} de {TODAS_COLUMNAS.length}</span>
+              <span className="text-[10px] font-bold text-red-700 bg-red-50 px-2 py-1 rounded">
+                {columnasMarcadas}/5 marcadas
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div
+                className="h-1.5 rounded-full transition-all duration-500"
+                style={{
+                  width: `${progreso}%`,
+                  backgroundColor: progreso === 100 ? "#dc2626" : "#64748b",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Main content area */}
+          <div className="min-h-[65vh] bg-white flex flex-col overflow-y-auto" role="tabpanel">
             {renderColumna(TODAS_COLUMNAS[columnaActiva], "flex-1")}
           </div>
 
-          <div className="flex border-t border-gray-300">
+          {/* Navigation footer */}
+          <div className="flex gap-2 border-t border-gray-300 bg-gray-50 p-2 sticky bottom-0">
             <button
               type="button"
               onClick={() => setColumnaActiva((c) => Math.max(0, c - 1))}
               disabled={columnaActiva === 0}
               aria-label="Columna anterior"
-              className="w-24 shrink-0 py-3 text-sm font-bold text-slate-700 bg-gray-100 disabled:opacity-30"
+              className="shrink-0 px-4 py-3 text-sm font-bold text-slate-700 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
             >
-              Atras
+              ← Atrás
             </button>
-            <div className="flex-1 flex items-center justify-center text-xs font-bold text-slate-700">
-              {columnaActiva + 1} de {TODAS_COLUMNAS.length} - {colActualLabel.full}
+
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
+              <p className="text-[10px] font-bold text-gray-600">{colActualLabel.full}</p>
+              <p className="text-[9px] text-gray-500 mt-0.5">
+                {columnaActiva === 0 ? "Marca la fórmula presidencial" : "Selecciona una lista y tus preferencias (opcional)"}
+              </p>
             </div>
+
             {esUltima ? (
               <button
                 type="button"
                 onClick={handleValidar}
                 aria-label="Verificar mi voto"
-                className="w-24 shrink-0 py-3 text-sm font-bold text-white bg-green-700"
+                className="shrink-0 px-4 py-3 text-sm font-bold text-white bg-red-700 hover:bg-red-800 rounded transition-colors"
               >
-                Verificar
+                Verificar ✓
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setColumnaActiva((c) => Math.min(TODAS_COLUMNAS.length - 1, c + 1))}
                 aria-label={`Ir a ${TAB_LABELS[TODAS_COLUMNAS[columnaActiva + 1]?.key ?? "senadorNacional"].full}`}
-                className="w-24 shrink-0 py-3 text-sm font-bold text-white bg-slate-700"
+                className="shrink-0 px-4 py-3 text-sm font-bold text-white bg-slate-700 hover:bg-slate-800 rounded transition-colors"
               >
-                Siguiente
+                Siguiente →
               </button>
             )}
           </div>
@@ -240,43 +271,48 @@ export function CedulaSimulador({ datos, regionNombre = "" }: Props) {
             <div className="sticky top-0 z-10 w-fit min-w-full">
               {/* Fila 1: etiquetas agrupadas */}
               <div className="flex divide-x divide-gray-300">
-                <div className="min-w-[196px] bg-[#b31b1b] text-white py-1.5 px-2 text-center">
+                <div className="w-[196px] shrink-0 bg-[#b31b1b] text-white py-2 px-2 text-center">
                   <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
-                    PRESIDENTE Y<br />VICEPRESIDENTES
+                    FÓRMULA<br />PRESIDENCIAL
                   </h3>
                 </div>
-                <div className="min-w-[492px] bg-[#1f3f94] text-white py-1.5 px-2 text-center">
-                  <h3 className="font-black text-[11px] uppercase tracking-wide">
-                    SENADORES
+                <div className="w-[246px] shrink-0 bg-[#1f3f94] text-white py-2 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
+                    SENADORES<br />NACIONALES
                   </h3>
                 </div>
-                <div className="min-w-[246px] bg-[#5b1f94] text-white py-1.5 px-2 text-center">
-                  <h3 className="font-black text-[11px] uppercase tracking-wide">
-                    DIPUTADOS
+                <div className="w-[246px] shrink-0 bg-[#14653a] text-white py-2 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
+                    SENADORES<br />{regionNombre ? regionNombre.toUpperCase() : "REGIONALES"}
                   </h3>
                 </div>
-                <div className="min-w-[246px] bg-[#b27607] text-white py-1.5 px-2 text-center">
-                  <h3 className="font-black text-[11px] uppercase tracking-wide">
-                    PARL. ANDINO
+                <div className="w-[246px] shrink-0 bg-[#5b1f94] text-white py-2 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
+                    DIPUTADOS<br />{regionNombre ? regionNombre.toUpperCase() : ""}
+                  </h3>
+                </div>
+                <div className="w-[246px] shrink-0 bg-[#b27607] text-white py-2 px-2 text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-wide leading-tight">
+                    PARLAMENTO<br />ANDINO
                   </h3>
                 </div>
               </div>
-              {/* Fila 2: sub-etiquetas */}
-              <div className="flex divide-x divide-gray-300 text-white text-[10px] font-black uppercase">
-                <div className="min-w-[196px] bg-[#b31b1b]/80 py-1 px-2 text-center">
-                  FÓRMULA
+              {/* Fila 2: sub-títulos descriptivos */}
+              <div className="flex divide-x divide-gray-300 text-white text-[9px] font-bold uppercase bg-opacity-90">
+                <div className="w-[196px] shrink-0 bg-[#b31b1b] bg-opacity-70 py-1.5 px-2 text-center">
+                  Presidente y VP
                 </div>
-                <div className="min-w-[246px] bg-[#1f3f94]/80 py-1 px-2 text-center">
-                  NACIONAL
+                <div className="w-[246px] shrink-0 bg-[#1f3f94] bg-opacity-70 py-1.5 px-2 text-center">
+                  Circunscripción<br />Nacional
                 </div>
-                <div className="min-w-[246px] bg-[#14653a] py-1 px-2 text-center">
-                  {regionNombre ? regionNombre.toUpperCase() : "REGIONAL"}
+                <div className="w-[246px] shrink-0 bg-[#14653a] bg-opacity-70 py-1.5 px-2 text-center">
+                  Por tu<br />Departamento
                 </div>
-                <div className="min-w-[246px] bg-[#5b1f94]/80 py-1 px-2 text-center">
-                  {regionNombre ? regionNombre.toUpperCase() : "REGIONAL"}
+                <div className="w-[246px] shrink-0 bg-[#5b1f94] bg-opacity-70 py-1.5 px-2 text-center">
+                  Cámara de<br />Diputados
                 </div>
-                <div className="min-w-[246px] bg-[#b27607]/80 py-1 px-2 text-center">
-                  ANDINO
+                <div className="w-[246px] shrink-0 bg-[#b27607] bg-opacity-70 py-1.5 px-2 text-center">
+                  Representación<br />Internacional
                 </div>
               </div>
             </div>

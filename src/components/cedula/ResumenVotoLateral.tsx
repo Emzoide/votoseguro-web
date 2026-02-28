@@ -68,7 +68,7 @@ export function ResumenVotoLateral({ voto, datos, onValidar, onBorrar }: Resumen
           {/* Barra de progreso mini */}
           <div className="mt-2 bg-red-900/50 rounded-full h-1.5">
             <div
-              className="h-1.5 rounded-full transition-all duration-500"
+              className="h-1.5 rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${(marcadas / 5) * 100}%`,
                 backgroundColor: marcadas === 5 ? "#4ade80" : "#fbbf24",
