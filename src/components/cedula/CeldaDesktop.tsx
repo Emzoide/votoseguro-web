@@ -41,7 +41,7 @@ export function CeldaPresidencialDesktop({
   if (partido.retirado) {
     return (
       <div
-        className="flex items-stretch h-[64px] min-w-[196px] bg-[#eceef0] opacity-40"
+        className="flex items-stretch h-[64px] w-[196px] shrink-0 bg-[#eceef0] opacity-40"
         aria-hidden="true"
       >
         <div className="w-12 shrink-0" />
@@ -52,15 +52,15 @@ export function CeldaPresidencialDesktop({
     );
   }
 
-  // Sin fórmula o sin candidato presidencial: fila vacía con patrón visual
+  // Sin fórmula o sin candidato presidencial: fila vacía
   if (!lista || !presidente) {
     return (
       <div
-        className="flex items-stretch h-[64px] min-w-[196px] bg-gray-100 border-dashed border-2 border-gray-300"
+        className="flex items-stretch h-[64px] w-[196px] shrink-0 bg-[#eceef0]"
         aria-hidden="true"
       >
         <div className="w-12 shrink-0" />
-        <div className="flex-1 min-w-0 flex items-center justify-center text-gray-400 text-[9px] font-semibold uppercase">-</div>
+        <div className="flex-1 min-w-0" />
         <div className="w-12 shrink-0 border-l border-[#c8d0d8]" />
         <div className="w-12 shrink-0 border-l border-[#c8d0d8]" />
       </div>
@@ -69,19 +69,17 @@ export function CeldaPresidencialDesktop({
 
   return (
     <div
-      className={`flex items-stretch h-[64px] min-w-[196px] transition-colors duration-200 cursor-pointer ${
-        isSelected ? "bg-red-50" : "bg-[#eceef0] hover:bg-[#e7eaee]"
-      }`}
+      className={`flex items-stretch h-[64px] w-[196px] shrink-0 transition-colors duration-200 cursor-pointer ${isSelected ? "bg-red-50" : "bg-[#eceef0] hover:bg-[#e7eaee]"
+        }`}
       onClick={() => onSeleccionar(lista.id)}
     >
       {/* Checkbox aspa */}
       <div className="flex items-center justify-center w-12 shrink-0">
         <div
-          className={`w-8 h-8 border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
-            isSelected
-              ? "border-black bg-red-100 shadow-sm"
-              : "border-gray-300 bg-white hover:border-gray-400"
-          }`}
+          className={`w-8 h-8 border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${isSelected
+            ? "border-black bg-red-100 shadow-sm"
+            : "border-gray-300 bg-white hover:border-gray-400"
+            }`}
           onClick={(e) => {
             e.stopPropagation();
             onSeleccionar(lista.id);
@@ -97,14 +95,12 @@ export function CeldaPresidencialDesktop({
 
       {/* Nombre partido + candidato */}
       <div className="flex-1 min-w-0 py-1.5 pr-2 flex flex-col justify-center">
-        <p className={`text-[10px] font-black uppercase leading-tight line-clamp-3 transition-colors duration-200 ${
-          isSelected ? "text-red-700" : "text-black"
-        }`}>
+        <p className={`text-[10px] font-black uppercase leading-tight line-clamp-3 transition-colors duration-200 ${isSelected ? "text-red-700" : "text-black"
+          }`}>
           {lista.organizacion.nombre}
         </p>
-        <p className={`text-[9px] leading-tight mt-0.5 truncate transition-colors duration-200 ${
-          isSelected ? "font-bold text-red-600" : "font-semibold text-slate-800"
-        }`}>
+        <p className={`text-[9px] leading-tight mt-0.5 truncate transition-colors duration-200 ${isSelected ? "font-bold text-red-600" : "font-semibold text-slate-800"
+          }`}>
           {presidente.nombres} {presidente.apellidoPaterno}
         </p>
       </div>
@@ -130,7 +126,7 @@ export function CeldaPresidencialDesktop({
         )}
       </div>
 
-      {/* Foto presidente */}
+      {/* Foto presidente - con checkmark overlay si está seleccionada */}
       <div className="w-12 shrink-0 border-l border-[#c8d0d8] bg-[#eceef0] flex items-center justify-center py-1.5">
         {fotoUrl ? (
           <div className="relative w-10 h-10 border border-black overflow-hidden bg-white">
@@ -141,9 +137,18 @@ export function CeldaPresidencialDesktop({
               className="object-contain bg-white"
               unoptimized
             />
+            {isSelected && (
+              <div className="absolute inset-0 flex items-center justify-center bg-red-600 bg-opacity-80 rounded-sm">
+                <span className="text-lg font-black text-white drop-shadow-lg">✓</span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="w-10 h-10 border border-black bg-[#f2f2f2]" />
+          <div className={`relative w-10 h-10 border border-black flex items-center justify-center ${isSelected ? "bg-red-600" : "bg-[#f2f2f2]"}`}>
+            {isSelected && (
+              <span className="text-lg font-black text-white drop-shadow-lg">✓</span>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -207,7 +212,7 @@ export function CeldaPreferencialDesktop({
   if (partido.retirado) {
     return (
       <div
-        className="flex items-stretch h-[64px] min-w-[246px] bg-[#eceef0] opacity-40"
+        className="flex items-stretch h-[64px] w-[246px] shrink-0 bg-[#eceef0] opacity-40"
         aria-hidden="true"
       >
         <div className="w-12 shrink-0" />
@@ -222,15 +227,15 @@ export function CeldaPreferencialDesktop({
     );
   }
 
-  // Sin lista para esta circunscripción: fila vacía con patrón visual
+  // Sin lista para esta circunscripción: fila vacía
   if (!lista) {
     return (
       <div
-        className="flex items-stretch h-[64px] min-w-[246px] bg-gray-100 border-dashed border-2 border-gray-300"
+        className="flex items-stretch h-[64px] w-[246px] shrink-0 bg-[#eceef0]"
         aria-hidden="true"
       >
         <div className="w-12 shrink-0" />
-        <div className="flex-1 min-w-0 flex items-center justify-center text-gray-400 text-[9px] font-semibold uppercase">-</div>
+        <div className="flex-1 min-w-0" />
         <div className="w-12 shrink-0 border-l border-[#c8d0d8]" />
         {maxPref > 0 && (
           <div
@@ -243,19 +248,17 @@ export function CeldaPreferencialDesktop({
 
   return (
     <div
-      className={`flex items-stretch h-[64px] min-w-[246px] transition-colors duration-200 cursor-pointer ${
-        isSelected ? "bg-red-50" : "bg-[#eceef0] hover:bg-[#e7eaee]"
-      }`}
+      className={`flex items-stretch h-[64px] w-[246px] shrink-0 transition-colors duration-200 cursor-pointer ${isSelected ? "bg-red-50" : "bg-[#eceef0] hover:bg-[#e7eaee]"
+        }`}
       onClick={() => onSeleccionar(lista.id)}
     >
       {/* Checkbox aspa */}
       <div className="flex items-center justify-center w-12 shrink-0">
         <div
-          className={`w-8 h-8 border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
-            isSelected
-              ? "border-black bg-red-100 shadow-sm"
-              : "border-gray-300 bg-white hover:border-gray-400"
-          }`}
+          className={`w-8 h-8 border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${isSelected
+            ? "border-black bg-red-100 shadow-sm"
+            : "border-gray-300 bg-white hover:border-gray-400"
+            }`}
           onClick={(e) => {
             e.stopPropagation();
             onSeleccionar(lista.id);
@@ -271,9 +274,8 @@ export function CeldaPreferencialDesktop({
 
       {/* Nombre partido */}
       <div className="flex-1 min-w-0 flex items-center py-1.5 pr-2">
-        <p className={`text-[10px] font-black uppercase leading-tight line-clamp-4 transition-colors duration-200 ${
-          isSelected ? "text-red-700" : "text-black"
-        }`}>
+        <p className={`text-[10px] font-black uppercase leading-tight line-clamp-4 transition-colors duration-200 ${isSelected ? "text-red-700" : "text-black"
+          }`}>
           {lista.organizacion.nombre}
         </p>
       </div>
@@ -300,35 +302,38 @@ export function CeldaPreferencialDesktop({
       </div>
 
       {/* Inputs preferenciales */}
-      {maxPref > 0 && isSelected && (
+      {maxPref > 0 && (
         <div
-          className="flex items-center justify-center gap-1.5 px-2 shrink-0 border-l border-[#c8d0d8]"
-          onClick={(e) => e.stopPropagation()}
+          className={`flex items-center justify-center gap-1.5 px-2 shrink-0 border-l border-[#c8d0d8] ${prefBlockWidth}`}
+          onClick={(e) => {
+            if (isSelected) e.stopPropagation();
+          }}
         >
-          {Array.from({ length: maxPref }).map((_, slot) => {
-            const hasVal = !!prefs[slot];
-            return (
-              <input
-                key={slot}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder={`${slot + 1}`}
-                value={inputVals[slot] ?? ""}
-                onChange={(e) => handleInputChange(slot, e.target.value)}
-                onBlur={() => handleInputCommit(slot)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                }}
-                className={`w-9 h-9 text-center text-[11px] font-black border-2 transition-all duration-200 focus:ring-2 focus:ring-red-500 focus:outline-none active:scale-90 ${
-                  hasVal
+          {isSelected &&
+            Array.from({ length: maxPref }).map((_, slot) => {
+              const hasVal = !!prefs[slot];
+              return (
+                <input
+                  key={slot}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder={`${slot + 1}`}
+                  value={inputVals[slot] ?? ""}
+                  onChange={(e) => handleInputChange(slot, e.target.value)}
+                  onBlur={() => handleInputCommit(slot)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                  }}
+                  className={`w-9 h-9 text-center text-[11px] font-black border-2 transition-all duration-200 focus:ring-2 focus:ring-red-500 focus:outline-none active:scale-90 ${hasVal
                     ? "border-black bg-white text-black"
                     : "border-slate-400 bg-[#f9f9f9] text-slate-500 placeholder-slate-400"
-                }`}
-                aria-label={`Preferencia ${slot + 1} para ${lista.organizacion.nombre}`}
-              />
-            );
-          })}
+                    }`}
+                  aria-label={`Preferencia ${slot + 1} para ${lista.organizacion.nombre
+                    }`}
+                />
+              );
+            })}
         </div>
       )}
     </div>
